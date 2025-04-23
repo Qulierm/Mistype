@@ -120,9 +120,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         Thread.sleep(forTimeInterval: 0.1)
         
-        // Восстанавливаем буфер обмена
+        // Очищаем буфер обмена после вставки
+        pasteboard.clearContents()
+        
+        // Восстанавливаем старое содержимое буфера обмена
         if let oldContents = oldContents {
-            pasteboard.clearContents()
             pasteboard.setString(oldContents, forType: .string)
         }
         
