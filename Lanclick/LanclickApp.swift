@@ -13,8 +13,9 @@ struct LanclickApp: App {
     
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            ContentView(appDelegate: appDelegate)
         }
+        .windowStyle(.hiddenTitleBar)
         .windowResizability(.contentSize)
     }
 }

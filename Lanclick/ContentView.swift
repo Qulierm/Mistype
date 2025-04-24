@@ -7,6 +7,9 @@
 
 import SwiftUI
 
+extension KeyboardShortcuts.Name {
+    static let toggleUnicornMode = Self("toggleUnicornMode")
+}
 enum TabItem: String, CaseIterable {
     case general = "General"
     case langs = "Language"
@@ -24,101 +27,157 @@ enum TabItem: String, CaseIterable {
 }
 
 struct ContentView: View {
+    @Namespace private var animationNamespace
     @State private var selectedTab: TabItem = .general
-    @State private var vibrateOnSilent: Bool = true
+    @State private var startAtLogin: Bool = true
+    @State private var menubarActive: Bool = true
+    let appDelegate: AppDelegate
 
     var body: some View {
-        VStack {
-            HStack {
-                ForEach(TabItem.allCases, id: \.self) { tab in
-                    Button(action: {
-                        selectedTab = tab
-                    }) {
-                        VStack {
-                            Image(systemName: tab.icon)
-                                .font(.system(size: 20))
-                            Text(tab.rawValue)
-                        }
-                        .padding(8)
-                        .foregroundColor(selectedTab == tab ? .blue : .gray)
-                        .background(
-                            selectedTab == tab ? Color.gray.opacity(0.2) : Color.clear
-                        )
-                        .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                }
-            }
-            Divider()
-            Spacer()
-
-            // Пример отображения контента
-            switch selectedTab {
-            case .general:
-                GroupBox(
-                    label: Text("App")
-                        .fontWeight(.bold)
-                        .font(.subheadline)
-                        .padding(3),
-                    content: {
-                        VStack{
-                            HStack {
-                                Text("Start at login")
-                                Spacer()
-                                Toggle("", isOn: $vibrateOnSilent)
-                                    .labelsHidden()
-                                    .toggleStyle(SwitchToggleStyle(tint: .accentColor))
+        ZStack {
+            // Фон с эффектом размытия
+            VisualEffectView(material: .sidebar, blendingMode: .withinWindow)
+                .edgesIgnoringSafeArea(.all)
+            
+            VStack {
+                HStack {
+                    ForEach(TabItem.allCases, id: \.self) { tab in
+                        Button(action: {
+                            withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                                selectedTab = tab
                             }
-                            Divider()
-                                .padding(3)
-                            HStack{
-                                Text("Show menu bar icon")
-                                Spacer()
-                                Toggle("", isOn: $vibrateOnSilent)
-                                    .labelsHidden()
-                                    .toggleStyle(SwitchToggleStyle(tint: .accentColor))
+                        }) {
+                            VStack {
+                                Image(systemName: tab.icon)
+                                    .font(.system(size: 20))
+                                Text(tab.rawValue)
                             }
-                            
-                        }
-                        .padding(5)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                )
-                GroupBox(
-                    label: Text("")
-                        .fontWeight(.bold)
-                        .font(.subheadline)
-                        .padding(3),
-                    content: {
-                        VStack{
-                            HStack{
-                                Button(action: {
-                                    // Code
-                                }) {
-                                    Text("Default")
+                            .padding(8)
+                            .foregroundColor(selectedTab == tab ? .blue : .gray)
+                            .background(
+                                ZStack {
+                                    if selectedTab == tab {
+                                        RoundedRectangle(cornerRadius: 9, style: .continuous)
+                                            .fill(Color.gray.opacity(0.2))
+                                            .matchedGeometryEffect(id: "tabHighlight", in: animationNamespace)
+                                    }
                                 }
-                            }
+                            )
                         }
-                        .padding(5)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .buttonStyle(PlainButtonStyle())
                     }
-                )
-                .frame(maxWidth: .infinity) // растягивание самого GroupBox
-                .padding()
-            case .langs:
-                Text("Language Settings")
-            case .shortcuts:
-                Text("Shortcuts Settings")
-            case .tools:
-                Text("Tools Settings")
-            }
+                }
+                Divider()
+                Spacer()
 
-            Spacer()
+                // Контент с анимацией
+                ZStack {
+                    switch selectedTab {
+                    case .general:
+                        generalView
+                            .transition(.opacity.combined(with: .slide))
+                    case .langs:
+                        Text("Language Settings")
+                            .transition(.opacity.combined(with: .move(edge: .trailing)))
+                    case .shortcuts:
+                        Text("Shortcuts Settings")
+                            .transition(.opacity.combined(with: .move(edge: .trailing)))
+                    case .tools:
+                        Text("Tools Settings")
+                            .transition(.opacity.combined(with: .move(edge: .trailing)))
+                    }
+                }
+                .animation(.easeInOut(duration: 0.25), value: selectedTab)
+
+                Spacer()
+            }
+            .padding()
+            .frame(minWidth: 300, minHeight: 250) // Уменьшил размер окна
+            .onAppear {
+                startAtLogin = appDelegate.isStartAtLoginEnabled()
+            }
+            .onChange(of: menubarActive) { newValue in
+                appDelegate.setStatusItemVisibility(newValue)
+            }
         }
-        .padding()
+    }
+
+    var generalView: some View {
+        VStack {
+            GroupBox(
+                label: Text("App")
+                    .fontWeight(.bold)
+                    .font(.subheadline)
+                    .padding(3),
+                content: {
+                    VStack {
+                        HStack {
+                            Text("Start at login")
+                            Spacer()
+                            Toggle("", isOn: $startAtLogin.animation(.easeInOut(duration: 0.2)))
+                                .labelsHidden()
+                                .toggleStyle(SwitchToggleStyle(tint: .accentColor))
+                                .onChange(of: startAtLogin) { newValue in
+                                    appDelegate.setStartAtLogin(newValue)
+                                }
+                        }
+                        Divider()
+                            .padding(3)
+                        HStack {
+                            Text("Show menu bar icon")
+                            Spacer()
+                            Toggle("", isOn: $menubarActive.animation(.easeInOut(duration: 0.2)))
+                                .labelsHidden()
+                                .toggleStyle(SwitchToggleStyle(tint: .accentColor))
+                        }
+                    }
+                    .padding(5)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            )
+            GroupBox(
+                label: Text("")
+                    .fontWeight(.bold)
+                    .font(.subheadline)
+                    .padding(3),
+                content: {
+                    VStack {
+                        HStack {
+                            Spacer()
+                            Button(action: {
+                                // Code
+                            }) {
+                                Text("Check for updates")
+                            }
+                            Spacer()
+                        }
+                    }
+                    .padding(5)
+                }
+            )
+        }
+    }
+}
+
+// Вспомогательное представление для создания размытого фона
+struct VisualEffectView: NSViewRepresentable {
+    let material: NSVisualEffectView.Material
+    let blendingMode: NSVisualEffectView.BlendingMode
+
+    func makeNSView(context: Context) -> NSVisualEffectView {
+        let view = NSVisualEffectView()
+        view.material = material
+        view.blendingMode = blendingMode
+        view.state = .active
+        return view
+    }
+
+    func updateNSView(_ nsView: NSVisualEffectView, context: Context) {
+        nsView.material = material
+        nsView.blendingMode = blendingMode
     }
 }
 
 #Preview {
-    ContentView()
+    ContentView(appDelegate: AppDelegate())
 }

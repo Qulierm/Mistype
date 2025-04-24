@@ -7,9 +7,11 @@
 import Cocoa
 import HotKey
 import ApplicationServices
+import ServiceManagement
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     var hotKey: HotKey?
+    private var statusItem: NSStatusItem?
     private var isRussianToEnglish = true // true - русский в английский, false - английский в русский
 
     // Словарь для транслитерации с русского на английский
@@ -48,6 +50,28 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         hotKey?.keyDownHandler = {
             _ = self.getSelectedText()
         }
+        
+        // Создаем иконку в менюбаре
+        setupStatusItem()
+    }
+    
+    private func setupStatusItem() {
+        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        
+        if let button = statusItem?.button {
+            button.image = NSImage(systemSymbolName: "arrow.trianglehead.2.clockwise.rotate.90.circle.fill", accessibilityDescription: "Mistype")
+        }
+        
+        let menu = NSMenu()
+        menu.addItem(NSMenuItem(title: "Открыть", action: #selector(openMainWindow), keyEquivalent: "o"))
+        menu.addItem(NSMenuItem.separator())
+        menu.addItem(NSMenuItem(title: "Выход", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
+        
+        statusItem?.menu = menu
+    }
+    
+    @objc private func openMainWindow() {
+        NSApp.activate(ignoringOtherApps: true)
     }
     
     // Проверка разрешений для Accessibility
@@ -89,49 +113,84 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         // Копируем выделенный текст
         let source = CGEventSource(stateID: .hidSystemState)
-        let keyDown = CGEvent(keyboardEventSource: source, virtualKey: 0x08, keyDown: true)
+        let keyDown = CGEvent(keyboardEventSource: source, virtualKey: 0x08, keyDown: true) // Cmd + C
         let keyUp = CGEvent(keyboardEventSource: source, virtualKey: 0x08, keyDown: false)
-        
         keyDown?.flags = .maskCommand
         keyUp?.flags = .maskCommand
-        
         keyDown?.post(tap: .cghidEventTap)
         keyUp?.post(tap: .cghidEventTap)
         
         Thread.sleep(forTimeInterval: 0.2)
         
         guard let selectedText = pasteboard.string(forType: .string) else { return nil }
-        
-        // Транслитерируем и вставляем текст
         let transliteratedText = transliterate(selectedText)
-        pasteboard.clearContents()
-        pasteboard.setString(transliteratedText, forType: .string)
+        
+        // Удаляем выделенный текст
+        let deleteKeyDown = CGEvent(keyboardEventSource: source, virtualKey: 0x33, keyDown: true)
+        let deleteKeyUp = CGEvent(keyboardEventSource: source, virtualKey: 0x33, keyDown: false)
+        deleteKeyDown?.post(tap: .cghidEventTap)
+        deleteKeyUp?.post(tap: .cghidEventTap)
         
         Thread.sleep(forTimeInterval: 0.1)
-        
-        let vKeyDown = CGEvent(keyboardEventSource: source, virtualKey: 0x09, keyDown: true)
-        let vKeyUp = CGEvent(keyboardEventSource: source, virtualKey: 0x09, keyDown: false)
-        
-        vKeyDown?.flags = .maskCommand
-        vKeyUp?.flags = .maskCommand
-        
-        vKeyDown?.post(tap: .cghidEventTap)
-        vKeyUp?.post(tap: .cghidEventTap)
-        
+
+        // Вводим текст посимвольно
+        // Вводим текст посимвольно
+        for character in transliteratedText {
+            let string = String(character)
+            let utf16 = Array(string.utf16) // UniChar = UInt16
+
+            let keyDown = CGEvent(keyboardEventSource: source, virtualKey: 0, keyDown: true)
+            let keyUp = CGEvent(keyboardEventSource: source, virtualKey: 0, keyDown: false)
+
+            keyDown?.keyboardSetUnicodeString(stringLength: utf16.count, unicodeString: utf16)
+            keyUp?.keyboardSetUnicodeString(stringLength: utf16.count, unicodeString: utf16)
+
+            keyDown?.post(tap: .cghidEventTap)
+            keyUp?.post(tap: .cghidEventTap)
+        }
+
         Thread.sleep(forTimeInterval: 0.1)
-        
-        // Очищаем буфер обмена после вставки
+
+        // Восстанавливаем буфер обмена
         pasteboard.clearContents()
-        
-        // Восстанавливаем старое содержимое буфера обмена
         if let oldContents = oldContents {
             pasteboard.setString(oldContents, forType: .string)
         }
-        
+
         return transliteratedText
     }
     
     func getSelectedText() -> String? {
         return getSelectedTextViaPasteboard()
+    }
+    
+    func setStatusItemVisibility(_ visible: Bool) {
+        if visible {
+            if statusItem == nil {
+                setupStatusItem()
+            }
+        } else {
+            if let statusItem = statusItem {
+                NSStatusBar.system.removeStatusItem(statusItem)
+                self.statusItem = nil
+            }
+        }
+    }
+    
+    func setStartAtLogin(_ enabled: Bool) {
+        if let bundleIdentifier = Bundle.main.bundleIdentifier {
+            if enabled {
+                try? SMAppService.mainApp.register()
+            } else {
+                try? SMAppService.mainApp.unregister()
+            }
+        }
+    }
+    
+    func isStartAtLoginEnabled() -> Bool {
+        if let bundleIdentifier = Bundle.main.bundleIdentifier {
+            return SMAppService.mainApp.status == .enabled
+        }
+        return false
     }
 }

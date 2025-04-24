@@ -11,7 +11,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		1164EB802DB90E0600EDC307 /* Lanclick.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Lanclick.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		1164EB802DB90E0600EDC307 /* Mistype.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Mistype.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1164EB992DB9225500EDC307 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -47,7 +47,7 @@
 		1164EB812DB90E0600EDC307 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				1164EB802DB90E0600EDC307 /* Lanclick.app */,
+				1164EB802DB90E0600EDC307 /* Mistype.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -55,9 +55,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		1164EB7F2DB90E0600EDC307 /* Lanclick */ = {
+		1164EB7F2DB90E0600EDC307 /* Mistype */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 1164EB8F2DB90E0700EDC307 /* Build configuration list for PBXNativeTarget "Lanclick" */;
+			buildConfigurationList = 1164EB8F2DB90E0700EDC307 /* Build configuration list for PBXNativeTarget "Mistype" */;
 			buildPhases = (
 				1164EB7C2DB90E0600EDC307 /* Sources */,
 				1164EB7D2DB90E0600EDC307 /* Frameworks */,
@@ -70,12 +70,12 @@
 			fileSystemSynchronizedGroups = (
 				1164EB822DB90E0600EDC307 /* Lanclick */,
 			);
-			name = Lanclick;
+			name = Mistype;
 			packageProductDependencies = (
 				1164EB932DB91F5300EDC307 /* HotKey */,
 			);
 			productName = Lanclick;
-			productReference = 1164EB802DB90E0600EDC307 /* Lanclick.app */;
+			productReference = 1164EB802DB90E0600EDC307 /* Mistype.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -93,7 +93,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 1164EB7B2DB90E0600EDC307 /* Build configuration list for PBXProject "Lanclick" */;
+			buildConfigurationList = 1164EB7B2DB90E0600EDC307 /* Build configuration list for PBXProject "Mistype" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -110,7 +110,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				1164EB7F2DB90E0600EDC307 /* Lanclick */,
+				1164EB7F2DB90E0600EDC307 /* Mistype */,
 			);
 		};
 /* End PBXProject section */
@@ -323,7 +323,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		1164EB7B2DB90E0600EDC307 /* Build configuration list for PBXProject "Lanclick" */ = {
+		1164EB7B2DB90E0600EDC307 /* Build configuration list for PBXProject "Mistype" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				1164EB8D2DB90E0700EDC307 /* Debug */,
@@ -332,7 +332,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		1164EB8F2DB90E0700EDC307 /* Build configuration list for PBXNativeTarget "Lanclick" */ = {
+		1164EB8F2DB90E0700EDC307 /* Build configuration list for PBXNativeTarget "Mistype" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				1164EB902DB90E0700EDC307 /* Debug */,
