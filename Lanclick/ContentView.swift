@@ -7,9 +7,6 @@
 
 import SwiftUI
 
-extension KeyboardShortcuts.Name {
-    static let toggleUnicornMode = Self("toggleUnicornMode")
-}
 enum TabItem: String, CaseIterable {
     case general = "General"
     case langs = "Language"
@@ -31,11 +28,11 @@ struct ContentView: View {
     @State private var selectedTab: TabItem = .general
     @State private var startAtLogin: Bool = true
     @State private var menubarActive: Bool = true
+    @State private var hotKeyString: String = "Command + Shift + L"
     let appDelegate: AppDelegate
 
     var body: some View {
         ZStack {
-            // Фон с эффектом размытия
             VisualEffectView(material: .sidebar, blendingMode: .withinWindow)
                 .edgesIgnoringSafeArea(.all)
             
@@ -70,7 +67,6 @@ struct ContentView: View {
                 Divider()
                 Spacer()
 
-                // Контент с анимацией
                 ZStack {
                     switch selectedTab {
                     case .general:
@@ -80,7 +76,7 @@ struct ContentView: View {
                         Text("Language Settings")
                             .transition(.opacity.combined(with: .move(edge: .trailing)))
                     case .shortcuts:
-                        Text("Shortcuts Settings")
+                        shortcutsView
                             .transition(.opacity.combined(with: .move(edge: .trailing)))
                     case .tools:
                         Text("Tools Settings")
@@ -92,7 +88,7 @@ struct ContentView: View {
                 Spacer()
             }
             .padding()
-            .frame(minWidth: 300, minHeight: 250) // Уменьшил размер окна
+            .frame(minWidth: 300, minHeight: 250)
             .onAppear {
                 startAtLogin = appDelegate.isStartAtLoginEnabled()
             }
@@ -157,9 +153,37 @@ struct ContentView: View {
             )
         }
     }
+
+    var shortcutsView: some View {
+        VStack {
+            GroupBox(
+                label: Text("Shortcuts Settings")
+                    .fontWeight(.bold)
+                    .font(.subheadline)
+                    .padding(3),
+                content: {
+                    VStack {
+                        HStack {
+                            Text("Hot Key")
+                            Spacer()
+                            TextField("Enter hotkey", text: $hotKeyString)
+                                .textFieldStyle(RoundedBorderTextFieldStyle())
+                                .padding(5)
+                                .frame(width: 180)
+                                .onSubmit {
+                                    print("Hotkey submitted: \(hotKeyString)")
+                                }
+                        }
+                            .padding(3)
+                    }
+                    .padding(5)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            )
+        }
+    }
 }
 
-// Вспомогательное представление для создания размытого фона
 struct VisualEffectView: NSViewRepresentable {
     let material: NSVisualEffectView.Material
     let blendingMode: NSVisualEffectView.BlendingMode

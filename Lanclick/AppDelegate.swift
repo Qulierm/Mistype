@@ -12,9 +12,8 @@ import ServiceManagement
 class AppDelegate: NSObject, NSApplicationDelegate {
     var hotKey: HotKey?
     private var statusItem: NSStatusItem?
-    private var isRussianToEnglish = true // true - русский в английский, false - английский в русский
+    private var isRussianToEnglish = true
 
-    // Словарь для транслитерации с русского на английский
     private let russianToEnglishMap: [Character: String] = [
         "а": "f", "б": ",", "в": "d", "г": "u", "д": "l", "е": "t", "ё": "|",
         "ж": ";", "з": "p", "и": "b", "й": "q", "к": "r", "л": "k", "м": "v",
@@ -28,7 +27,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         "Ъ": "]", "Ы": "S", "Ь": "M", "Э": "'", "Ю": ".", "Я": "Z"
     ]
     
-    // Словарь для транслитерации с английского на русский
     private let englishToRussianMap: [Character: String] = [
         "a": "ф", "b": "и", "c": "с", "d": "в", "e": "у", "f": "а", "g": "п",
         "h": "р", "i": "ш", "j": "о", "k": "л", "l": "д", "m": "ь", "n": "т",
@@ -41,17 +39,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         ",": "б", ";": "ж", "[": "х", "]": "ъ", "'": "э", ".": "ю", "|": "ё"
     ]
 
+    @Published var selectedHotKey: HotKey?
+    
     func applicationDidFinishLaunching(_ aNotification: Notification) {
-        // Проверяем разрешения для Accessibility
         checkAccessibilityPermissions()
-        
-        // Регистрируем горячие клавиши
-        hotKey = HotKey(key: .l, modifiers: [.command, .shift])
-        hotKey?.keyDownHandler = {
-            _ = self.getSelectedText()
-        }
-        
-        // Создаем иконку в менюбаре
+        registerHotKey()
         setupStatusItem()
     }
     
@@ -74,7 +66,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.activate(ignoringOtherApps: true)
     }
     
-    // Проверка разрешений для Accessibility
     private func checkAccessibilityPermissions() {
         let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true]
         let accessEnabled = AXIsProcessTrustedWithOptions(options as CFDictionary)
@@ -85,13 +76,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
     
-    // Определение языка текста
     private func isRussianText(_ text: String) -> Bool {
         let russianLetters = CharacterSet(charactersIn: "абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ")
         return text.unicodeScalars.contains { russianLetters.contains($0) }
     }
     
-    // Транслитерация текста
     private func transliterate(_ text: String) -> String {
         var result = ""
         let map = isRussianText(text) ? russianToEnglishMap : englishToRussianMap
@@ -106,12 +95,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         return result
     }
     
-    // Получение и замена выделенного текста
     private func getSelectedTextViaPasteboard() -> String? {
         let pasteboard = NSPasteboard.general
         let oldContents = pasteboard.string(forType: .string)
         
-        // Копируем выделенный текст
         let source = CGEventSource(stateID: .hidSystemState)
         let keyDown = CGEvent(keyboardEventSource: source, virtualKey: 0x08, keyDown: true) // Cmd + C
         let keyUp = CGEvent(keyboardEventSource: source, virtualKey: 0x08, keyDown: false)
@@ -125,7 +112,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         guard let selectedText = pasteboard.string(forType: .string) else { return nil }
         let transliteratedText = transliterate(selectedText)
         
-        // Удаляем выделенный текст
         let deleteKeyDown = CGEvent(keyboardEventSource: source, virtualKey: 0x33, keyDown: true)
         let deleteKeyUp = CGEvent(keyboardEventSource: source, virtualKey: 0x33, keyDown: false)
         deleteKeyDown?.post(tap: .cghidEventTap)
@@ -133,11 +119,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         Thread.sleep(forTimeInterval: 0.1)
 
-        // Вводим текст посимвольно
-        // Вводим текст посимвольно
         for character in transliteratedText {
             let string = String(character)
-            let utf16 = Array(string.utf16) // UniChar = UInt16
+            let utf16 = Array(string.utf16)
 
             let keyDown = CGEvent(keyboardEventSource: source, virtualKey: 0, keyDown: true)
             let keyUp = CGEvent(keyboardEventSource: source, virtualKey: 0, keyDown: false)
@@ -151,7 +135,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         Thread.sleep(forTimeInterval: 0.1)
 
-        // Восстанавливаем буфер обмена
         pasteboard.clearContents()
         if let oldContents = oldContents {
             pasteboard.setString(oldContents, forType: .string)
@@ -192,5 +175,19 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             return SMAppService.mainApp.status == .enabled
         }
         return false
+    }
+
+    private func registerHotKey() {
+        hotKey = HotKey(key: .l, modifiers: [.command, .shift])
+        hotKey?.keyDownHandler = {
+            _ = self.getSelectedText()
+        }
+    }
+    
+    func updateHotKey(with key: Key, modifiers: NSEvent.ModifierFlags) {
+        hotKey = HotKey(key: key, modifiers: modifiers)
+        hotKey?.keyDownHandler = {
+            _ = self.getSelectedText()
+        }
     }
 }
